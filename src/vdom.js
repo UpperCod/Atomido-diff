@@ -1,4 +1,3 @@
-import { ELEMENT_OBSERVER, ELEMENT_COLLECT } from "./constants";
 /**
  * Create an instance of a virtual node
  * @param {*} tag - be social to the tagName
@@ -21,14 +20,9 @@ export class VDom {
         this.tag = tag;
         this.props = props || {};
         this.children = children || [];
-        this.collect = this.props[ELEMENT_COLLECT] || false;
-    }
-    emit(type, arg) {
-        let observer = this.props[ELEMENT_OBSERVER];
-        if (typeof observer === "function") observer(type, arg);
     }
     clone(tag = this.tag, props = this.props, children = this.children) {
-        return new VDom(tag, props, children);
+        return new VDom(tag, { ...props }, children);
     }
 }
 export function isDom(tag) {

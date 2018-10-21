@@ -1,4 +1,4 @@
-import { ELEMENT_MASTER, ELEMENT_PREFIX, ELEMENT_COLLECT } from "./constants";
+import { ELEMENT_MASTER, ELEMENT_COLLECT } from "./constants";
 import { remove, append, replace } from "./dom";
 import { VDom, h, isDom } from "./vdom";
 /**
@@ -13,7 +13,7 @@ import { VDom, h, isDom } from "./vdom";
  * @param {Boolean} svg - define if the html element is a svg
  * @return {HTMLELement} - returns the current node.
  */
-export default function diff(parent, prevNode, next, slots = {}, isSvg) {
+export function diff(parent, prevNode, next, slots = {}, isSvg) {
     let prev = (prevNode && prevNode[ELEMENT_MASTER]) || new VDom(),
         nextNode = prevNode,
         nextMaster = next;
@@ -52,28 +52,27 @@ export default function diff(parent, prevNode, next, slots = {}, isSvg) {
             if (prev.children[0] !== next.children[0])
                 nextNode.textContent = next.children[0];
         } else {
-            let props = diffProps(
-                nextNode,
-                next.tag === prev.tag ? prev.props : {},
-                next.props,
-                isSvg,
-                /**
-                 * It allows to obtain properties of the iteration of diff by properties
-                 */
-                next.collect,
-                /**
-                 * This allows not to delete the previous state and keep it in the next state
-                 */
-                parent && next.collect
-            );
-            if (next.collect) {
+            let collect = (parent && nextNode[ELEMENT_COLLECT]) || {},
+                props = diffProps(
+                    nextNode,
+                    next.tag === prev.tag ? prev.props : {},
+                    next.props,
+                    isSvg,
+                    /**
+                     * It allows to obtain properties of the iteration of diff by properties
+                     */
+                    collect.props
+                );
+            if (collect.handler) {
                 props.children = next.children.map(
                     vdom => (vdom.tag ? vdom : vdom.children[0])
                 );
-                next.emit(ELEMENT_COLLECT, props);
+                collect.handler(props);
             } else {
                 if (!isSlot && nextNode) {
-                    let children = Array.from(nextNode.childNodes),
+                    let children = Array.from(
+                            (nextNode.shadowRoot || nextNode).childNodes
+                        ),
                         length = Math.max(
                             children.length,
                             next.children.length
@@ -99,6 +98,10 @@ export default function diff(parent, prevNode, next, slots = {}, isSvg) {
     return nextNode;
 }
 
+export function Collect(node, props, handler) {
+    this.observer = node[ELEMENT_COLLECT] = { props, handler };
+}
+
 /**
  * compares the attributes associated with the 2 render states
  * @param {HTMLELement} node
@@ -111,7 +114,7 @@ export default function diff(parent, prevNode, next, slots = {}, isSvg) {
  * @param {Boolean} [nextMerge] - it allows not to eliminate the properties of the previous state and add them to the next state
  * @return {Object} Collected properties
  */
-function diffProps(node, prev, next, isSvg, collect, nextMerge) {
+function diffProps(node, prev, next, isSvg, collect) {
     // generates a list of the existing attributes in both versions
     let keys = Object.keys(prev).concat(Object.keys(next)),
         length = keys.length,
@@ -119,8 +122,7 @@ function diffProps(node, prev, next, isSvg, collect, nextMerge) {
     for (let i = 0; i < length; i++) {
         let prop = keys[i];
 
-        if (!prop.indexOf(ELEMENT_PREFIX) || (isSvg && prop === "xmlns"))
-            continue;
+        if (isSvg && prop === "xmlns") continue;
         if (prev[prop] !== next[prop]) {
             if (collect && collect.indexOf(prop) > -1) {
                 props[prop] = next[prop];
@@ -161,7 +163,7 @@ function diffProps(node, prev, next, isSvg, collect, nextMerge) {
                         : node.setAttribute(prop, next[prop]);
                 }
             } else {
-                if (nextMerge) {
+                if (collect) {
                     next[prop] = prev[prop];
                 } else {
                     node.removeAttribute(prop);
@@ -178,7 +180,9 @@ function diffProps(node, prev, next, isSvg, collect, nextMerge) {
  */
 function slot(vdom, slots) {
     if (vdom.tag === "slot") {
-        return vdom.clone(slots[vdom.props.name] || "");
+        vdom = vdom.clone(slots[vdom.props.name] || "");
+        delete vdom.props.name;
+        return vdom;
     }
     return vdom;
 }

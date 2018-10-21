@@ -1,9 +1,8 @@
 {
   "name": "atomico-diff",
-  "version": "0.0.0",
+  "version": "0.0.8",
   "description": "is a small diff algorithm created to be used within web-components",
   "main": "dist/atomico-diff.js",
-  "umd:main": "dist/atomico-diff.umd.js",
   "module": "dist/atomico-diff.m.js",
   "source": "src/index.js",
   "author": "Matias Trujillo Olivares",
@@ -25,14 +24,16 @@
     "babel-jest": "^23.6.0",
     "jest": "^23.6.0",
     "regenerator-runtime": "^0.12.1",
-    "rollup": "^0.66.6",
-    "rollup-plugin-terser": "^1.0.1"
+    "rollup": "^0.66.6"
   },
   "babel": {
     "plugins": [
-      ["@babel/plugin-transform-react-jsx", {
-        "pragma": "h"
-      }]
+      [
+        "@babel/plugin-transform-react-jsx",
+        {
+          "pragma": "h"
+        }
+      ]
     ]
   }
 }
