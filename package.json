@@ -1,6 +1,6 @@
 {
   "name": "atomico-diff",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "is a small diff algorithm created to be used within web-components",
   "main": "dist/atomico-diff.js",
   "module": "dist/atomico-diff.m.js",
