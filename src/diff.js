@@ -1,4 +1,4 @@
-import { ELEMENT_MASTER, ELEMENT_COLLECT } from "./constants";
+import { ELEMENT_MASTER, ELEMENT_COLLECT, ELEMENT_CONTEXT } from "./constants";
 import { remove, append, replace } from "./dom";
 import { VDom, h, isDom } from "./vdom";
 /**
@@ -10,10 +10,11 @@ import { VDom, h, isDom } from "./vdom";
  * @param {HTMLELement} [prevNode] - Node that can possess the previous state
  * @param {Object} next - Next render state
  * @param {Object} slots - Group the slots to be retrieved by the special slot tag
+ * @param {*} context - allows to share information within the children of the component
  * @param {Boolean} svg - define if the html element is a svg
  * @return {HTMLELement} - returns the current node.
  */
-export function diff(parent, prevNode, next, slots = {}, isSvg) {
+export function diff(parent, prevNode, next, slots = {}, context, isSvg) {
     let prev = (prevNode && prevNode[ELEMENT_MASTER]) || new VDom(),
         nextNode = prevNode,
         nextMaster = next;
@@ -48,10 +49,14 @@ export function diff(parent, prevNode, next, slots = {}, isSvg) {
                 }
             }
         }
+
         if (nextNode.nodeType === 3) {
             if (prev.children[0] !== next.children[0])
                 nextNode.textContent = next.children[0];
         } else {
+            if (nextNode && nextNode[ELEMENT_CONTEXT]) {
+                context = nextNode[ELEMENT_CONTEXT](context);
+            }
             let collect = (parent && nextNode[ELEMENT_COLLECT]) || {},
                 props = diffProps(
                     nextNode,
@@ -83,6 +88,7 @@ export function diff(parent, prevNode, next, slots = {}, isSvg) {
                             children[i],
                             next.children[i],
                             slots,
+                            context,
                             isSvg
                         );
                     }
@@ -100,6 +106,12 @@ export function diff(parent, prevNode, next, slots = {}, isSvg) {
 
 export function Collect(node, props, handler) {
     this.observer = node[ELEMENT_COLLECT] = { props, handler };
+}
+
+export function Context(node, handler, prop = "context") {
+    node[ELEMENT_CONTEXT] = context => {
+        return (node[prop] = handler(context) || context);
+    };
 }
 
 /**

@@ -1,2 +1,2 @@
-export { diff, Collect } from "./diff";
+export { diff, Collect, Context } from "./diff";
 export { h, isVDom } from "./vdom";

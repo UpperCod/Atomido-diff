@@ -1,6 +1,7 @@
 const ELEMENT_PREFIX = "element-";
 const ELEMENT_COLLECT = ELEMENT_PREFIX + "collect";
 const ELEMENT_MASTER = ELEMENT_PREFIX + "master";
+const ELEMENT_CONTEXT = ELEMENT_PREFIX + "context";
 
 function root(parent) {
     return parent.shadowRoot || parent;
@@ -84,10 +85,11 @@ function concat(children, merge = []) {
  * @param {HTMLELement} [prevNode] - Node that can possess the previous state
  * @param {Object} next - Next render state
  * @param {Object} slots - Group the slots to be retrieved by the special slot tag
+ * @param {*} context - allows to share information within the children of the component
  * @param {Boolean} svg - define if the html element is a svg
  * @return {HTMLELement} - returns the current node.
  */
-function diff(parent, prevNode, next, slots = {}, isSvg) {
+function diff(parent, prevNode, next, slots = {}, context, isSvg) {
     let prev = (prevNode && prevNode[ELEMENT_MASTER]) || new VDom(),
         nextNode = prevNode,
         nextMaster = next;
@@ -122,10 +124,14 @@ function diff(parent, prevNode, next, slots = {}, isSvg) {
                 }
             }
         }
+
         if (nextNode.nodeType === 3) {
             if (prev.children[0] !== next.children[0])
                 nextNode.textContent = next.children[0];
         } else {
+            if (nextNode && nextNode[ELEMENT_CONTEXT]) {
+                context = nextNode[ELEMENT_CONTEXT](context);
+            }
             let collect = (parent && nextNode[ELEMENT_COLLECT]) || {},
                 props = diffProps(
                     nextNode,
@@ -157,6 +163,7 @@ function diff(parent, prevNode, next, slots = {}, isSvg) {
                             children[i],
                             next.children[i],
                             slots,
+                            context,
                             isSvg
                         );
                     }
@@ -174,6 +181,12 @@ function diff(parent, prevNode, next, slots = {}, isSvg) {
 
 function Collect(node, props, handler) {
     this.observer = node[ELEMENT_COLLECT] = { props, handler };
+}
+
+function Context(node, handler, prop = "context") {
+    node[ELEMENT_CONTEXT] = context => {
+        return (node[prop] = handler(context) || context);
+    };
 }
 
 /**
@@ -261,5 +274,5 @@ function slot(vdom, slots) {
     return vdom;
 }
 
-export { diff, Collect, h, isVDom };
+export { diff, Collect, Context, h, isVDom };
 //# sourceMappingURL=atomico-diff.m.js.map
