@@ -15,7 +15,8 @@ import { VDom, h, isDom } from "./vdom";
  * @return {HTMLELement} - returns the current node.
  */
 export function diff(parent, prevNode, next, slots = {}, context, isSvg) {
-    let prev = (prevNode && prevNode[ELEMENT_MASTER]) || new VDom(),
+    let branch = (prevNode && prevNode[ELEMENT_MASTER]) || new Map(),
+        prev = branch.get(parent) || new VDom(),
         nextNode = prevNode,
         nextMaster = next;
 
@@ -100,7 +101,7 @@ export function diff(parent, prevNode, next, slots = {}, context, isSvg) {
             remove(parent, prevNode);
         }
     }
-    nextNode[ELEMENT_MASTER] = nextMaster;
+    nextNode[ELEMENT_MASTER] = branch.set(parent, nextMaster);
     return nextNode;
 }
 

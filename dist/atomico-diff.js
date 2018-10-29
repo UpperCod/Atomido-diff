@@ -94,7 +94,8 @@ function concat(children, merge = []) {
  * @return {HTMLELement} - returns the current node.
  */
 function diff(parent, prevNode, next, slots = {}, context, isSvg) {
-    let prev = (prevNode && prevNode[ELEMENT_MASTER]) || new VDom(),
+    let branch = (prevNode && prevNode[ELEMENT_MASTER]) || new Map(),
+        prev = branch.get(parent) || new VDom(),
         nextNode = prevNode,
         nextMaster = next;
 
@@ -179,7 +180,7 @@ function diff(parent, prevNode, next, slots = {}, context, isSvg) {
             remove(parent, prevNode);
         }
     }
-    nextNode[ELEMENT_MASTER] = nextMaster;
+    nextNode[ELEMENT_MASTER] = branch.set(parent, nextMaster);
     return nextNode;
 }
 
